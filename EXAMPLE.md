@@ -18,7 +18,7 @@ TMHOME=chainroot1 go run ./examples/. show_node_id
 
 ### Run Nodes
 ``` 
-TMHOME=chainroot1 go run ./examples/. start  
+TMHOME=chainroot1 go run ./examples/. start --eth.network.url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
 
 export MASTER_ID=$(TMHOME=chainroot1 go run ./examples/. show_node_id)
 TMHOME=chainroot2 go run ./examples/. start --p2p.persistent_peers=${MASTER_ID}@127.0.0.1:26656 --daemon.api_addr=0.0.0.0:7778
