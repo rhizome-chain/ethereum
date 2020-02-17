@@ -2,12 +2,14 @@ package subs
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	
 	"github.com/rhizome-chain/tendermint-daemon/daemon/worker"
 )
 
@@ -79,7 +81,7 @@ func (subscriber *EthSubscriber) Start() error {
 func (subscriber *EthSubscriber) handleLog(elog types.Log, checkPoint *BlockCheckPoint) {
 	err := subscriber.handler.HandleLog(subscriber.helper, elog)
 	if err != nil {
-		subscriber.helper.Error("[FATAL-ETH-LogHandler] ", "job_id",subscriber.ID(), "err",err)
+		subscriber.helper.Error("[FATAL-ETH-LogHandler] ", "job_id", subscriber.ID(), "err", err)
 	}
 	checkPoint.BlockNumber = elog.BlockNumber
 	checkPoint.Index = elog.Index
@@ -95,7 +97,7 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *BlockCheckPoint) {
 	logs := make(chan types.Log)
 	sub, err := subscriber.client.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
-		subscriber.helper.Error("[ERROR] SubscribeFilterLogs ", "job_id",subscriber.ID(), "err",err)
+		subscriber.helper.Error("[ERROR] SubscribeFilterLogs ", "job_id", subscriber.ID(), "err", err)
 		return
 	}
 	
@@ -103,16 +105,17 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *BlockCheckPoint) {
 	
 	subscriber.started = true
 	
+	subscriber.helper.Info(fmt.Sprintf("[EthSubscriber %s] starts subscribing. ",subscriber.ID()))
 	for subscriber.started {
 		select {
 		case err := <-sub.Err():
 			if !subscriber.started {
 				break
 			}
-			subscriber.helper.Error("[ERROR] Eth Sub ", "job_id",subscriber.ID(), "err",err)
+			subscriber.helper.Error("[ERROR] Eth Sub ", "job_id", subscriber.ID(), "err", err)
 		case vLog := <-logs:
 			if !subscriber.started {
-				subscriber.helper.Info("[WARN] Eth Subscriber Stops .. ", "job_id",subscriber.ID())
+				subscriber.helper.Info("[WARN] Eth Subscriber Stops .. ", "job_id", subscriber.ID())
 				break
 			}
 			
@@ -124,9 +127,22 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *BlockCheckPoint) {
 	
 	subscriber.started = false
 }
+
 func (subscriber *EthSubscriber) collect(checkPoint *BlockCheckPoint) {
+	remained := subscriber.collectStep(checkPoint, 2)
+	for remained > 0 {
+		remained = subscriber.collectStep(checkPoint, 2)
+	}
+}
+
+func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step uint64) (remained uint64) {
+	if subscriber.client == nil {
+		return 0
+	}
+	
 	query := ethereum.FilterQuery{
 		FromBlock: big.NewInt(int64(checkPoint.BlockNumber)),
+		ToBlock:   big.NewInt(int64(checkPoint.BlockNumber + step)),
 		Addresses: subscriber.jobInfo.contractAddresses,
 	}
 	
@@ -136,15 +152,47 @@ func (subscriber *EthSubscriber) collect(checkPoint *BlockCheckPoint) {
 		return
 	}
 	
-	for _, vLog := range logs {
-		if vLog.BlockNumber == checkPoint.BlockNumber && vLog.Index <= checkPoint.Index {
-			// fmt.Println("------ Skip Handle Log : Block - ", vLog.BlockNumber, ", Index - ", vLog.Index, "<=", checkPoint.Index)
-			continue
+	subscriber.helper.Info(fmt.Sprintf("[EthSubscriber %s] collect old TX form %d to %d",
+		subscriber.ID(), query.FromBlock, query.ToBlock))
+	fmt.Println(" - len(logs)=", len(logs))
+	oldBlock := checkPoint.BlockNumber
+	if len(logs) > 0 {
+		for _, vLog := range logs {
+			if vLog.BlockNumber == checkPoint.BlockNumber && vLog.Index <= checkPoint.Index {
+				fmt.Println("------ Skip Handle Log : Block - ", vLog.BlockNumber, ", Index - ", vLog.Index, "<=", checkPoint.Index)
+				continue
+			}
+			
+			// fmt.Println("Collect Log - %d:%d \n", "block_num", vLog.BlockNumber, "index", vLog.Index)
+			subscriber.handleLog(vLog, checkPoint)
 		}
-		
-		subscriber.helper.Debug("Collect Log - %d:%d \n", "block_num", vLog.BlockNumber, "index",vLog.Index)
-		subscriber.handleLog(vLog, checkPoint)
+		if oldBlock == checkPoint.BlockNumber {
+			checkPoint.BlockNumber = checkPoint.BlockNumber + step
+			checkPoint.Index = 0
+		}
+	} else {
+		checkPoint.BlockNumber = checkPoint.BlockNumber + step
+		checkPoint.Index = 0
 	}
+	
+	header, err := subscriber.client.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		panic("Cannot get Eth HeaderByNumber")
+	}
+	
+	var curBlock uint64
+	
+	if header != nil {
+		curBlock = uint64(header.Number.Int64())
+	}
+	
+	remained = curBlock - checkPoint.BlockNumber
+	
+	fmt.Println(" - curBlock=", curBlock)
+	fmt.Println(" - checkPoint.BlockNumber=", checkPoint.BlockNumber)
+	fmt.Println(" - remained=", remained)
+	
+	return remained
 }
 
 // Stop ..
@@ -152,7 +200,7 @@ func (subscriber *EthSubscriber) Stop() error {
 	if subscriber.client != nil {
 		subscriber.client.Close()
 	}
-	
+	subscriber.client = nil
 	subscriber.started = false
 	return nil
 }
