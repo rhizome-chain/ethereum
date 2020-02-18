@@ -129,9 +129,9 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *BlockCheckPoint) {
 }
 
 func (subscriber *EthSubscriber) collect(checkPoint *BlockCheckPoint) {
-	remained := subscriber.collectStep(checkPoint, 2)
+	remained := subscriber.collectStep(checkPoint, 10)
 	for remained > 0 {
-		remained = subscriber.collectStep(checkPoint, 2)
+		remained = subscriber.collectStep(checkPoint, 10)
 	}
 }
 
@@ -154,7 +154,9 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step u
 	
 	subscriber.helper.Info(fmt.Sprintf("[EthSubscriber %s] collect old TX form %d to %d",
 		subscriber.ID(), query.FromBlock, query.ToBlock))
+	
 	fmt.Println(" - len(logs)=", len(logs))
+	
 	oldBlock := checkPoint.BlockNumber
 	if len(logs) > 0 {
 		for _, vLog := range logs {
@@ -191,6 +193,9 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step u
 	fmt.Println(" - curBlock=", curBlock)
 	fmt.Println(" - checkPoint.BlockNumber=", checkPoint.BlockNumber)
 	fmt.Println(" - remained=", remained)
+	
+	checkPoint.BlockNumber = checkPoint.BlockNumber + 1
+	checkPoint.Index = 0
 	
 	return remained
 }
