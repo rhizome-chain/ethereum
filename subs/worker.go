@@ -129,19 +129,20 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *BlockCheckPoint) {
 }
 
 func (subscriber *EthSubscriber) collect(checkPoint *BlockCheckPoint) {
-	remained := subscriber.collectStep(checkPoint, 10)
+	remained := subscriber.collectStep(checkPoint, 10, 0)
+	
 	for remained > 0 {
-		remained = subscriber.collectStep(checkPoint, 10)
+		remained = subscriber.collectStep(checkPoint, 10, 1)
 	}
 }
 
-func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step uint64) (remained uint64) {
+func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step uint64, offset uint64) (remained int64) {
 	if subscriber.client == nil {
 		return 0
 	}
 	
 	query := ethereum.FilterQuery{
-		FromBlock: big.NewInt(int64(checkPoint.BlockNumber)),
+		FromBlock: big.NewInt(int64(checkPoint.BlockNumber + offset)),
 		ToBlock:   big.NewInt(int64(checkPoint.BlockNumber + step)),
 		Addresses: subscriber.jobInfo.contractAddresses,
 	}
@@ -155,24 +156,26 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step u
 	subscriber.helper.Info(fmt.Sprintf("[EthSubscriber %s] collect old TX form %d to %d",
 		subscriber.ID(), query.FromBlock, query.ToBlock))
 	
-	fmt.Println(" - len(logs)=", len(logs))
-	
-	oldBlock := checkPoint.BlockNumber
+	beenHandled := false
 	if len(logs) > 0 {
-		for _, vLog := range logs {
-			if vLog.BlockNumber == checkPoint.BlockNumber && vLog.Index <= checkPoint.Index {
-				fmt.Println("------ Skip Handle Log : Block - ", vLog.BlockNumber, ", Index - ", vLog.Index, "<=", checkPoint.Index)
-				continue
+		if offset == 0 {
+			for _, vLog := range logs {
+				if vLog.BlockNumber == checkPoint.BlockNumber && vLog.Index <= checkPoint.Index {
+					fmt.Println("------ Skip Log : Block - ", vLog.BlockNumber, ", Index - ", vLog.Index, "<=", checkPoint.Index)
+					continue
+				}
+				subscriber.handleLog(vLog, checkPoint)
+				beenHandled = true
 			}
-			
-			// fmt.Println("Collect Log - %d:%d \n", "block_num", vLog.BlockNumber, "index", vLog.Index)
-			subscriber.handleLog(vLog, checkPoint)
+		} else {
+			for _, vLog := range logs {
+				subscriber.handleLog(vLog, checkPoint)
+				beenHandled = true
+			}
 		}
-		if oldBlock == checkPoint.BlockNumber {
-			checkPoint.BlockNumber = checkPoint.BlockNumber + step
-			checkPoint.Index = 0
-		}
-	} else {
+	}
+	
+	if !beenHandled {
 		checkPoint.BlockNumber = checkPoint.BlockNumber + step
 		checkPoint.Index = 0
 	}
@@ -182,20 +185,13 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step u
 		panic("Cannot get Eth HeaderByNumber")
 	}
 	
-	var curBlock uint64
+	var curBlock int64
 	
 	if header != nil {
-		curBlock = uint64(header.Number.Int64())
+		curBlock = header.Number.Int64()
 	}
 	
-	remained = curBlock - checkPoint.BlockNumber
-	
-	fmt.Println(" - curBlock=", curBlock)
-	fmt.Println(" - checkPoint.BlockNumber=", checkPoint.BlockNumber)
-	fmt.Println(" - remained=", remained)
-	
-	checkPoint.BlockNumber = checkPoint.BlockNumber + 1
-	checkPoint.Index = 0
+	remained = curBlock - int64(checkPoint.BlockNumber)
 	
 	return remained
 }
