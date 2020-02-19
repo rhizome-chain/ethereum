@@ -1,18 +1,24 @@
 package module
 
 import (
-	//"errors"
+	"fmt"
+	"path/filepath"
+	
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/config"
+	
+	// "errors"
 	"github.com/rhizome-chain/ethereum/subs"
 	erc20 "github.com/rhizome-chain/ethereum/subs/erc20"
 	erc721 "github.com/rhizome-chain/ethereum/subs/erc721"
 	"github.com/rhizome-chain/tendermint-daemon/daemon"
 	"github.com/rhizome-chain/tendermint-daemon/daemon/worker"
 	"github.com/rhizome-chain/tendermint-daemon/types"
-	"github.com/spf13/cobra"
 )
 
 const (
-	flagEthUrl = "eth.network.url"
+	flagEthUrl = "eth_network_url"
 )
 
 type EthModule struct {
@@ -31,6 +37,18 @@ func (e EthModule) Factories() (facs []worker.Factory) {
 
 func (e EthModule) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String(flagEthUrl, "", "Ethereum network url : wss://mainnet.infura.io/v3/PROJECT-ID")
+}
+
+func (e EthModule) InitFile(config *config.Config) {
+	confFilePath := filepath.Join(config.RootDir, "config", "ethereum.toml")
+	ethConfig := &subs.EthConfig{}
+	err := viper.Unmarshal(ethConfig)
+	if err != nil {
+		panic("Unmarshal EthConfig" + err.Error())
+	}
+	fmt.Println(ethConfig)
+	types.WriteModuleConfigFile(confFilePath,ethConfig)
+	fmt.Println("Write EthConfig file:", confFilePath)
 }
 
 func (e EthModule) BeforeDaemonStarting(cmd *cobra.Command, dm *daemon.Daemon, moduleConfig types.ModuleConfig) {
