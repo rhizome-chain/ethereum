@@ -42,7 +42,7 @@ func (e EthModule) InitFile(config *config.Config) {
 	if err != nil {
 		panic("Unmarshal EthConfig" + err.Error())
 	}
-	fmt.Println(ethConfig)
+
 	types.WriteModuleConfigFile(confFilePath,ethConfig)
 	fmt.Println("[EthModule] Write EthConfig file:", confFilePath)
 }

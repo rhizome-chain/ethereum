@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rhizome-chain/tendermint-daemon/daemon/worker"
+	tdtypes "github.com/rhizome-chain/tendermint-daemon/types"
 	
 	"github.com/rhizome-chain/ethereum/subs"
 )
@@ -28,6 +29,10 @@ type erc20Event struct {
 	Tokens      *big.Int `json:"Tokens"`
 	BlockNumber uint64   `json:"blockNumber"`
 	TxIndex     uint     `json:"txIndex"`
+}
+
+func init(){
+	tdtypes.BasicCdc.RegisterConcrete(erc20Event{}, "erc20Event", nil)
 }
 
 var _ subs.LogHandler = (*ERC20LogHandler)(nil)
@@ -79,11 +84,14 @@ func (handler *ERC20LogHandler) HandleLog(helper *worker.Helper, elog types.Log)
 	}
 
 	if err == nil {
-		// rowID := fmt.Sprintf("%d-%d", elog.BlockNumber, elog.TxIndex)
+		rowID := fmt.Sprintf("%d-%d", elog.BlockNumber, elog.TxIndex)
 
-		fmt.Println(" - ", handler.Name(), event)
+		fmt.Println(" - ", helper.ID(), event)
 
-		// err = helper.PutData(rowID, event)
+		err = helper.PutObject("in", rowID, event)
+		if err != nil {
+			helper.Error("Put Eth Event", err)
+		}
 	}
 
 	return err

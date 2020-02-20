@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rhizome-chain/tendermint-daemon/daemon/worker"
+	tdtypes "github.com/rhizome-chain/tendermint-daemon/types"
 	
 	"github.com/rhizome-chain/ethereum/subs"
 )
@@ -43,6 +44,10 @@ type erc721Event struct {
 	Tokens      *big.Int `json:"Tokens"`
 	BlockNumber uint64   `json:"blockNumber"`
 	TxIndex     uint     `json:"txIndex"`
+}
+
+func init(){
+	tdtypes.BasicCdc.RegisterConcrete(erc721Event{}, "erc721Event", nil)
 }
 
 // Name : erc20
