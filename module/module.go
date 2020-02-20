@@ -17,10 +17,6 @@ import (
 	"github.com/rhizome-chain/tendermint-daemon/types"
 )
 
-const (
-	flagEthUrl = "eth_network_url"
-)
-
 type EthModule struct {
 }
 
@@ -36,7 +32,7 @@ func (e EthModule) Factories() (facs []worker.Factory) {
 }
 
 func (e EthModule) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().String(flagEthUrl, "", "Ethereum network url : wss://mainnet.infura.io/v3/PROJECT-ID")
+	subs.AddEthFlags(cmd)
 }
 
 func (e EthModule) InitFile(config *config.Config) {
@@ -48,20 +44,25 @@ func (e EthModule) InitFile(config *config.Config) {
 	}
 	fmt.Println(ethConfig)
 	types.WriteModuleConfigFile(confFilePath,ethConfig)
-	fmt.Println("Write EthConfig file:", confFilePath)
+	fmt.Println("[EthModule] Write EthConfig file:", confFilePath)
+}
+
+func (e EthModule) LoadFile(config *config.Config)(modcfg types.ModuleConfig) {
+	confFilePath := filepath.Join(config.RootDir, "config", "ethereum.toml")
+	ethConfig := &subs.EthConfig{}
+	types.LoadModuleConfigFile(confFilePath, ethConfig)
+	fmt.Println("[EthModule] Load EthConfig file:", confFilePath, ethConfig)
+	return ethConfig
 }
 
 func (e EthModule) BeforeDaemonStarting(cmd *cobra.Command, dm *daemon.Daemon, moduleConfig types.ModuleConfig) {
 	ethConfig := moduleConfig.(*subs.EthConfig)
 	ethUrl := ethConfig.NetworkURL
 	
-	if len(ethUrl) == 0 {
-		ethUrl2, err := cmd.Flags().GetString(flagEthUrl)
-		if err != nil {
-			panic("run flag ethereum network url " + err.Error())
-		}
-		ethUrl = ethUrl2
+	if len(ethUrl) > 0 {
 		ethConfig.NetworkURL = ethUrl
+	} else {
+		ethUrl = ethConfig.NetworkURL
 	}
 	
 	if len(ethUrl) == 0 {

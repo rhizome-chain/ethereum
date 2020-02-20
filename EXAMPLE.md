@@ -3,9 +3,22 @@
 
 ### Init
 ```
-TMHOME=chainroot1 go run ./examples/. init --chain-id=daemon-chain --node-name=node1
+TMHOME=chainroot1 go run ./examples/. init --chain-id=daemon-chain --node-name=node1 \
+       --p2p.allow_duplicate_ip=true \
+       --daemon_api_addr=0.0.0.0:7777 \
+       --daemon_alive_threshold=2 \
+       --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
+
 TMHOME=chainroot2 go run ./examples/. init --chain-id=daemon-chain --node-name=node2
 TMHOME=chainroot3 go run ./examples/. init --chain-id=daemon-chain --node-name=node3
+
+export MASTER_ID=$(TMHOME=chainroot1 go run ./examples/. show_node_id)
+TMHOME=chainroot4 go run ./examples/. init --chain-id=daemon-chain --node-name=node4 \
+       --p2p.persistent_peers=${MASTER_ID}@127.0.0.1:26656 \
+       --daemon_api_addr=0.0.0.0:7780 \
+       --daemon_alive_threshold=2 \
+       --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
+
 ```
 * In chainroot1/config/config.toml file, you should set allow_duplicate_ip true to enable to run multi nodes on the same machine
 * Copy config.toml and genesis.json and paste to chainroot2/config, chainroot3/config
@@ -18,7 +31,7 @@ TMHOME=chainroot1 go run ./examples/. show_node_id
 
 ### Run Nodes
 ``` 
-TMHOME=chainroot1 go run ./examples/. start --eth.network.url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
+TMHOME=chainroot1 go run ./examples/. start 
 
 export MASTER_ID=$(TMHOME=chainroot1 go run ./examples/. show_node_id)
 TMHOME=chainroot2 go run ./examples/. start --p2p.persistent_peers=${MASTER_ID}@127.0.0.1:26656 --daemon.api_addr=0.0.0.0:7778
@@ -26,6 +39,7 @@ TMHOME=chainroot2 go run ./examples/. start --p2p.persistent_peers=${MASTER_ID}@
 export MASTER_ID=$(TMHOME=chainroot1 go run ./examples/. show_node_id)
 TMHOME=chainroot3 go run ./examples/. start --p2p.persistent_peers=${MASTER_ID}@127.0.0.1:26656 --daemon.api_addr=0.0.0.0:7779
 
+TMHOME=chainroot4 go run ./examples/. start
 ```
 
 ### Register Sample Jobs

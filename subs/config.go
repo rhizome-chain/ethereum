@@ -1,6 +1,13 @@
 package subs
 
-import "github.com/rhizome-chain/tendermint-daemon/types"
+import (
+	"github.com/rhizome-chain/tendermint-daemon/types"
+	"github.com/spf13/cobra"
+)
+
+const (
+	flagEthUrl = "eth_network_url"
+)
 
 type EthConfig struct {
 	NetworkURL string `mapstructure:"eth_network_url"`
@@ -9,6 +16,10 @@ type EthConfig struct {
 var _ types.ModuleConfig = (*EthConfig)(nil)
 
 
+
+func AddEthFlags(cmd *cobra.Command) {
+	cmd.Flags().String(flagEthUrl, "", "Ethereum network url : wss://mainnet.infura.io/v3/PROJECT-ID")
+}
 
 func (e EthConfig) GetTemplate() string {
 	return templateText
