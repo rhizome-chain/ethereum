@@ -24,6 +24,12 @@ curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
   -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether11
 curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
   -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether12
+curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
+  -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether13
+curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
+  -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether14
+curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
+  -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether15
 #curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
 #     -X DELETE http://localhost:7777/v1/daemon/job/erc20_others
 #curl -i -H "Accept: application/json" -H "Content-Type:application/json" \

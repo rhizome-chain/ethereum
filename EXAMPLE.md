@@ -6,11 +6,11 @@
 TMHOME=chainroot1 go run ./examples/. init --chain-id=daemon-chain --node-name=node1 \
        --force-rewrite=true \
        --p2p.allow_duplicate_ip=true \
-       --mempool.size=200000 \
+       --mempool.size=300000 \
        --mempool.max_txs_bytes=107374182400 \
        --mempool.max_tx_bytes=104857600 \
        --daemon_api_addr=0.0.0.0:7777 \
-       --daemon_alive_threshold=2 \
+       --daemon_alive_threshold=4 \
        --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
 
 export MASTER_ID=$(TMHOME=chainroot1 go run ./examples/. show_node_id)
@@ -20,12 +20,12 @@ TMHOME=chainroot2 go run ./examples/. init --chain-id=daemon-chain --node-name=n
        --p2p.allow_duplicate_ip=true \
        --p2p.laddr="tcp://0.0.0.0:16656" \
        --p2p.persistent_peers=${MASTER_ID}@127.0.0.1:26656 \
-       --mempool.size=200000 \
+       --mempool.size=300000 \
        --mempool.max_txs_bytes=107374182400 \
        --mempool.max_tx_bytes=104857600 \
        --instrumentation.prometheus_listen_addr=:16660 \
        --daemon_api_addr=0.0.0.0:7778 \
-       --daemon_alive_threshold=2 \
+       --daemon_alive_threshold=4 \
        --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
 
 export MASTER_ID=$(TMHOME=chainroot1 go run ./examples/. show_node_id)
@@ -35,12 +35,12 @@ TMHOME=chainroot3 go run ./examples/. init --chain-id=daemon-chain --node-name=n
        --p2p.allow_duplicate_ip=true \
        --p2p.laddr="tcp://0.0.0.0:17756" \
        --p2p.persistent_peers=${MASTER_ID}@127.0.0.1:26656 \
-       --mempool.size=200000 \
+       --mempool.size=300000 \
        --mempool.max_txs_bytes=107374182400 \
        --mempool.max_tx_bytes=104857600 \
        --instrumentation.prometheus_listen_addr=:17760 \
        --daemon_api_addr=0.0.0.0:7779 \
-       --daemon_alive_threshold=2 \
+       --daemon_alive_threshold=4 \
        --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
 
 export MASTER_ID=$(TMHOME=chainroot1 go run ./examples/. show_node_id)
@@ -50,12 +50,12 @@ TMHOME=chainroot4 go run ./examples/. init --chain-id=daemon-chain --node-name=n
        --p2p.allow_duplicate_ip=true \
        --p2p.laddr="tcp://0.0.0.0:18856" \
        --p2p.persistent_peers=${MASTER_ID}@127.0.0.1:26656 \
-       --mempool.size=200000 \
+       --mempool.size=300000 \
        --mempool.max_txs_bytes=107374182400 \
        --mempool.max_tx_bytes=104857600 \
        --instrumentation.prometheus_listen_addr=:18860 \
        --daemon_api_addr=0.0.0.0:7780 \
-       --daemon_alive_threshold=2 \
+       --daemon_alive_threshold=4 \
        --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
 
 ```

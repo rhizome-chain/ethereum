@@ -31,18 +31,18 @@ func (subscriber *EthSubscriber) ID() string {
 	return subscriber.id
 }
 
-func (subscriber *EthSubscriber) canRun() bool {
-	return subscriber.client != nil
-}
-
 // Start ..
 func (subscriber *EthSubscriber) Start() error {
 	if subscriber.client != nil {
 		subscriber.client.Close()
 	}
+	
+	subscriber.started = true
+	
 	client, err := ethclient.Dial(subscriber.networkURL)
 	if err != nil {
 		subscriber.helper.Error("[ERROR] Cannot Connect to ", "network_url", subscriber.networkURL, "err", err)
+		subscriber.started = false
 		return err
 	}
 	subscriber.client = client
@@ -51,33 +51,52 @@ func (subscriber *EthSubscriber) Start() error {
 	checkPoint := &ethtypes.BlockCheckPoint{}
 	subscriber.helper.GetCheckpoint(checkPoint)
 	
-	go func() {
-		if checkPoint.BlockNumber > 0 {
-			subscriber.collect(checkPoint)
-		}
-		
-		subscriber.subscribe(checkPoint)
-		subscriber.helper.Info("[WARN] ETH Subs Ends. ", "job_id", subscriber.ID())
-	}()
+	// go func() {
+	// 	if checkPoint.BlockNumber > 0 {
+	// 		subscriber.collect(checkPoint)
+	// 	}
+	//
+	// 	subscriber.subscribe(checkPoint)
+	// 	subscriber.helper.Info("[WARN] ETH Subs Ends. ", "job_id", subscriber.ID())
+	// }()
+	
+	if subscriber.jobInfo.From > 0 && checkPoint.BlockNumber == 0 {
+		checkPoint.BlockNumber = subscriber.jobInfo.From
+	}
+	
+	
+	if checkPoint.BlockNumber > 0 {
+		subscriber.collect(checkPoint)
+	}
+	
+	subscriber.subscribe(checkPoint)
+	subscriber.helper.Info("[WARN] ETH Subs Ends. ", "job_id", subscriber.ID())
+	
+	subscriber.started = false
+	
 	return nil
 }
 
 func (subscriber *EthSubscriber) handleLog(elog types.Log, checkPoint *ethtypes.BlockCheckPoint) bool {
-	if !subscriber.canRun() {
+	if !subscriber.IsStarted() {
 		return false
 	}
 	err := subscriber.handler.HandleLog(subscriber.helper, elog)
+	
 	if err != nil {
 		subscriber.helper.Error("[FATAL-ETH-LogHandler] ", "job_id", subscriber.ID(), "err", err)
+		// panic(fmt.Sprintf("handleLog %s", subscriber.ID()))
+	} else {
+		checkPoint.BlockNumber = elog.BlockNumber
+		checkPoint.Index = elog.Index
+		subscriber.helper.PutCheckpoint(checkPoint)
 	}
-	checkPoint.BlockNumber = elog.BlockNumber
-	checkPoint.Index = elog.Index
-	subscriber.helper.PutCheckpoint(checkPoint)
+	
 	return true
 }
 
 func (subscriber *EthSubscriber) subscribe(checkPoint *ethtypes.BlockCheckPoint) {
-	if !subscriber.canRun() {
+	if !subscriber.IsStarted() {
 		return
 	}
 	
@@ -94,8 +113,6 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *ethtypes.BlockCheckPoint)
 	}
 	
 	defer sub.Unsubscribe()
-	
-	subscriber.started = true
 	
 	subscriber.helper.Info(fmt.Sprintf("[EthSubscriber %s] starts subscribing. ", subscriber.ID()))
 	for subscriber.started {
@@ -116,8 +133,6 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *ethtypes.BlockCheckPoint)
 			}
 		}
 	}
-	
-	subscriber.started = false
 }
 
 func (subscriber *EthSubscriber) collect(checkPoint *ethtypes.BlockCheckPoint) {
@@ -129,7 +144,7 @@ func (subscriber *EthSubscriber) collect(checkPoint *ethtypes.BlockCheckPoint) {
 }
 
 func (subscriber *EthSubscriber) collectStep(checkPoint *ethtypes.BlockCheckPoint, step uint64, offset uint64) (remained int64) {
-	if subscriber.client == nil {
+	if !subscriber.IsStarted() {
 		return 0
 	}
 	

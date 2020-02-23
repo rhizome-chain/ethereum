@@ -54,8 +54,8 @@ func (e *EthModule) Init(config *config.Config) {
 	
 	manager := subs.NewEthSubsManager(ethUrl)
 	
-	manager.RegisterLogHandler(&erc20.ERC20LogHandler{})
-	manager.RegisterLogHandler(&erc721.ERC721LogHandler{})
+	manager.RegisterLogHandler(erc20.NewERC20LogHandler())
+	manager.RegisterLogHandler(erc721.NewERC721LogHandler())
 	
 	e.manager = manager
 }

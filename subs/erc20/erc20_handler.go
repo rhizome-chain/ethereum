@@ -38,6 +38,13 @@ func init() {
 
 var _ ethtypes.LogHandler = (*ERC20LogHandler)(nil)
 
+func NewERC20LogHandler() *ERC20LogHandler {
+	handler := &ERC20LogHandler{}
+	abi, _ := abi.JSON(strings.NewReader(erc20Abi))
+	handler.erc20Abi = &abi
+	return handler
+}
+
 // Name : erc20
 func (handler *ERC20LogHandler) Name() string { return "erc20" }
 
@@ -52,11 +59,6 @@ var (
 
 // HandleLog ..
 func (handler *ERC20LogHandler) HandleLog(helper *worker.Helper, elog types.Log) error {
-	if handler.erc20Abi == nil {
-		abi, _ := abi.JSON(strings.NewReader(erc20Abi))
-		handler.erc20Abi = &abi
-	}
-	
 	logHash := elog.Topics[0].Hex()
 	
 	address := elog.Address.Hex()
