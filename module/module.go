@@ -2,12 +2,12 @@ package module
 
 import (
 	"fmt"
-	erc20 "github.com/rhizome-chain/ethereum/subs/erc20"
-	erc721 "github.com/rhizome-chain/ethereum/subs/erc721"
 	"path/filepath"
 	
+	erc20 "github.com/rhizome-chain/ethereum/subs/erc20"
+	erc721 "github.com/rhizome-chain/ethereum/subs/erc721"
+	
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/config"
 	
 	// "errors"
@@ -17,16 +17,17 @@ import (
 	"github.com/rhizome-chain/tendermint-daemon/types"
 )
 
+const Name = "eth"
+
 type EthModule struct {
-	modcfg *subs.EthConfig
+	modcfg  *subs.EthConfig
 	manager *subs.EthSubsManager
 }
 
 var _ daemon.Module = (*EthModule)(nil)
 
-func (e *EthModule) GetDefaultConfig() types.ModuleConfig {
-	config := &subs.EthConfig{}
-	return config
+func (e *EthModule) Name() string {
+	return Name
 }
 
 func (e *EthModule) GetConfig() types.ModuleConfig {
@@ -35,22 +36,6 @@ func (e *EthModule) GetConfig() types.ModuleConfig {
 
 func (e *EthModule) Factories() (facs []worker.Factory) {
 	return []worker.Factory{e.manager}
-}
-
-func (e *EthModule) AddFlags(cmd *cobra.Command) {
-	subs.AddEthFlags(cmd)
-}
-
-func (e *EthModule) InitFile(config *config.Config) {
-	confFilePath := filepath.Join(config.RootDir, "config", "ethereum.toml")
-	ethConfig := &subs.EthConfig{}
-	err := viper.Unmarshal(ethConfig)
-	if err != nil {
-		panic("Unmarshal EthConfig" + err.Error())
-	}
-	
-	types.WriteModuleConfigFile(confFilePath, ethConfig)
-	fmt.Println("[EthModule] Write EthConfig file:", confFilePath)
 }
 
 func (e *EthModule) Init(config *config.Config) {

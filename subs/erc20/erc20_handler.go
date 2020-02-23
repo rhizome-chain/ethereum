@@ -5,15 +5,16 @@ import (
 	"log"
 	"math/big"
 	"strings"
-
+	
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	
 	"github.com/rhizome-chain/tendermint-daemon/daemon/worker"
 	tdtypes "github.com/rhizome-chain/tendermint-daemon/types"
 	
-	"github.com/rhizome-chain/ethereum/subs"
+	ethtypes "github.com/rhizome-chain/ethereum/subs/types"
 )
 
 // ERC20LogHandler implements LogHandler
@@ -31,11 +32,11 @@ type erc20Event struct {
 	TxIndex     uint     `json:"txIndex"`
 }
 
-func init(){
-	tdtypes.BasicCdc.RegisterConcrete(erc20Event{}, "erc20Event", nil)
+func init() {
+	tdtypes.BasicCdc.RegisterConcrete(erc20Event{}, "eth/erc20Event", nil)
 }
 
-var _ subs.LogHandler = (*ERC20LogHandler)(nil)
+var _ ethtypes.LogHandler = (*ERC20LogHandler)(nil)
 
 // Name : erc20
 func (handler *ERC20LogHandler) Name() string { return "erc20" }
@@ -55,16 +56,16 @@ func (handler *ERC20LogHandler) HandleLog(helper *worker.Helper, elog types.Log)
 		abi, _ := abi.JSON(strings.NewReader(erc20Abi))
 		handler.erc20Abi = &abi
 	}
-
+	
 	logHash := elog.Topics[0].Hex()
-
+	
 	address := elog.Address.Hex()
 	fromAddr := common.HexToAddress(elog.Topics[1].Hex()).Hex()
 	toAddr := common.HexToAddress(elog.Topics[2].Hex()).Hex()
-
+	
 	event := erc20Event{Address: address, From: fromAddr, To: toAddr,
 		BlockNumber: elog.BlockNumber, TxIndex: elog.TxIndex}
-
+	
 	var err error
 	switch logHash {
 	case erc20TransferSigHash:
@@ -82,17 +83,17 @@ func (handler *ERC20LogHandler) HandleLog(helper *worker.Helper, elog types.Log)
 		}
 		break
 	}
-
+	
 	if err == nil {
 		rowID := fmt.Sprintf("%d-%d", elog.BlockNumber, elog.TxIndex)
-
-		fmt.Println(" - ", helper.ID(), event)
-
+		
+		// fmt.Println(" - ", helper.ID(), rowID)
+		
 		err = helper.PutObject("in", rowID, event)
 		if err != nil {
-			helper.Error("Put Eth Event", err)
+			helper.Error("Put Eth Event", "jobID", helper.ID(), "rowID", rowID, "err", err)
 		}
 	}
-
+	
 	return err
 }

@@ -6,10 +6,10 @@ import (
 	"math/big"
 	
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	
+	ethtypes "github.com/rhizome-chain/ethereum/subs/types"
 	"github.com/rhizome-chain/tendermint-daemon/daemon/worker"
 )
 
@@ -18,37 +18,21 @@ type EthSubscriber struct {
 	id         string
 	client     *ethclient.Client
 	networkURL string
-	jobInfo    *EthSubsJobInfo
+	jobInfo    *ethtypes.EthSubsJobInfo
 	helper     *worker.Helper
 	started    bool
-	handler    LogHandler
+	handler    ethtypes.LogHandler
 }
 
 var _ worker.Worker = (*EthSubscriber)(nil)
 
-// LogHandler handler for ethereum log
-type LogHandler interface {
-	Name() string
-	HandleLog(helper *worker.Helper, log types.Log) error
-}
-
-// EthSubsJobInfo ..
-type EthSubsJobInfo struct {
-	Handler           string   `json:"handler"`
-	CAs               []string `json:"cas"`
-	contractAddresses []common.Address
-	From              uint64 `json:"from"`
-}
-
-// BlockCheckPoint ..
-type BlockCheckPoint struct {
-	BlockNumber uint64
-	Index       uint
-}
-
 // ID ..
 func (subscriber *EthSubscriber) ID() string {
 	return subscriber.id
+}
+
+func (subscriber *EthSubscriber) canRun() bool {
+	return subscriber.client != nil
 }
 
 // Start ..
@@ -64,7 +48,7 @@ func (subscriber *EthSubscriber) Start() error {
 	subscriber.client = client
 	
 	subscriber.helper.Info("[Debug] ETH Subs :", "CAs", subscriber.jobInfo.CAs, ", from:", subscriber.jobInfo.From)
-	checkPoint := &BlockCheckPoint{}
+	checkPoint := &ethtypes.BlockCheckPoint{}
 	subscriber.helper.GetCheckpoint(checkPoint)
 	
 	go func() {
@@ -78,7 +62,10 @@ func (subscriber *EthSubscriber) Start() error {
 	return nil
 }
 
-func (subscriber *EthSubscriber) handleLog(elog types.Log, checkPoint *BlockCheckPoint) {
+func (subscriber *EthSubscriber) handleLog(elog types.Log, checkPoint *ethtypes.BlockCheckPoint) bool {
+	if !subscriber.canRun() {
+		return false
+	}
 	err := subscriber.handler.HandleLog(subscriber.helper, elog)
 	if err != nil {
 		subscriber.helper.Error("[FATAL-ETH-LogHandler] ", "job_id", subscriber.ID(), "err", err)
@@ -86,12 +73,17 @@ func (subscriber *EthSubscriber) handleLog(elog types.Log, checkPoint *BlockChec
 	checkPoint.BlockNumber = elog.BlockNumber
 	checkPoint.Index = elog.Index
 	subscriber.helper.PutCheckpoint(checkPoint)
+	return true
 }
 
-func (subscriber *EthSubscriber) subscribe(checkPoint *BlockCheckPoint) {
+func (subscriber *EthSubscriber) subscribe(checkPoint *ethtypes.BlockCheckPoint) {
+	if !subscriber.canRun() {
+		return
+	}
+	
 	query := ethereum.FilterQuery{
 		FromBlock: big.NewInt(int64(checkPoint.BlockNumber)),
-		Addresses: subscriber.jobInfo.contractAddresses,
+		Addresses: subscriber.jobInfo.GetContractAddresses(),
 	}
 	
 	logs := make(chan types.Log)
@@ -105,7 +97,7 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *BlockCheckPoint) {
 	
 	subscriber.started = true
 	
-	subscriber.helper.Info(fmt.Sprintf("[EthSubscriber %s] starts subscribing. ",subscriber.ID()))
+	subscriber.helper.Info(fmt.Sprintf("[EthSubscriber %s] starts subscribing. ", subscriber.ID()))
 	for subscriber.started {
 		select {
 		case err := <-sub.Err():
@@ -119,16 +111,16 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *BlockCheckPoint) {
 				break
 			}
 			
-			// fmt.Printf("Sub Log Block Number: %d:%d  Addr: %s\n", vLog.BlockNumber, vLog.Index, vLog.Address.Hex())
-			
-			subscriber.handleLog(vLog, checkPoint)
+			if !subscriber.handleLog(vLog, checkPoint) {
+				break
+			}
 		}
 	}
 	
 	subscriber.started = false
 }
 
-func (subscriber *EthSubscriber) collect(checkPoint *BlockCheckPoint) {
+func (subscriber *EthSubscriber) collect(checkPoint *ethtypes.BlockCheckPoint) {
 	remained := subscriber.collectStep(checkPoint, 10, 0)
 	
 	for remained > 0 {
@@ -136,7 +128,7 @@ func (subscriber *EthSubscriber) collect(checkPoint *BlockCheckPoint) {
 	}
 }
 
-func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step uint64, offset uint64) (remained int64) {
+func (subscriber *EthSubscriber) collectStep(checkPoint *ethtypes.BlockCheckPoint, step uint64, offset uint64) (remained int64) {
 	if subscriber.client == nil {
 		return 0
 	}
@@ -144,7 +136,7 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step u
 	query := ethereum.FilterQuery{
 		FromBlock: big.NewInt(int64(checkPoint.BlockNumber + offset)),
 		ToBlock:   big.NewInt(int64(checkPoint.BlockNumber + step)),
-		Addresses: subscriber.jobInfo.contractAddresses,
+		Addresses: subscriber.jobInfo.GetContractAddresses(),
 	}
 	
 	logs, err := subscriber.client.FilterLogs(context.Background(), query)
@@ -164,12 +156,17 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step u
 					fmt.Println("------ Skip Log : Block - ", vLog.BlockNumber, ", Index - ", vLog.Index, "<=", checkPoint.Index)
 					continue
 				}
-				subscriber.handleLog(vLog, checkPoint)
+				
+				if !subscriber.handleLog(vLog, checkPoint) {
+					return 0
+				}
 				beenHandled = true
 			}
 		} else {
 			for _, vLog := range logs {
-				subscriber.handleLog(vLog, checkPoint)
+				if !subscriber.handleLog(vLog, checkPoint) {
+					return 0
+				}
 				beenHandled = true
 			}
 		}
@@ -182,7 +179,9 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *BlockCheckPoint, step u
 	
 	header, err := subscriber.client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
-		panic("Cannot get Eth HeaderByNumber")
+		// panic("Cannot get Eth HeaderByNumber:" + err.Error())
+		subscriber.helper.Error(fmt.Sprintf("Job[%s] cannot get Eth HeaderByNumber", subscriber.helper.ID()), err)
+		return 0
 	}
 	
 	var curBlock int64

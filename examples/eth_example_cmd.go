@@ -9,7 +9,7 @@ import (
 func main() {
 	daemonProvider := &daemon.BaseProvider{}
 	
-	daemonProvider.AddModule(&module.EthModule{})
+	daemonProvider.AddModuleProvider(&module.EthModuleProvider{})
 	
 	cmd.DoCmd(daemonProvider)
 }

@@ -5,26 +5,26 @@ import (
 	
 	"encoding/json"
 	
-	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/rhizome-chain/ethereum/subs/types"
 	"github.com/rhizome-chain/tendermint-daemon/daemon/worker"
 )
 
 // EthSubsManager implements worker.Factory, name eth_subs
 type EthSubsManager struct {
 	networkURL string
-	handlers   map[string]LogHandler
+	handlers   map[string]ethtypes.LogHandler
 }
 
 var _ worker.Factory = (*EthSubsManager)(nil)
 
 // NewEthSubsManager ..
 func NewEthSubsManager(networkURL string) *EthSubsManager {
-	manager := EthSubsManager{networkURL: networkURL, handlers: make(map[string]LogHandler)}
+	manager := EthSubsManager{networkURL: networkURL, handlers: make(map[string]ethtypes.LogHandler)}
 	return &manager
 }
 
 // RegisterLogHandler ..
-func (manager *EthSubsManager) RegisterLogHandler(handler LogHandler) {
+func (manager *EthSubsManager) RegisterLogHandler(handler ethtypes.LogHandler) {
 	manager.handlers[handler.Name()] = handler
 }
 
@@ -40,17 +40,8 @@ func (manager *EthSubsManager) Name() string {
 
 // NewWorker implements worker.Factory.NewWorker
 func (manager *EthSubsManager) NewWorker(helper *worker.Helper) (wroker worker.Worker, err error) {
-	jobInfo := new(EthSubsJobInfo)
+	jobInfo := new(ethtypes.EthSubsJobInfo)
 	json.Unmarshal(helper.Job().Data, jobInfo)
-	
-	addrs := []common.Address{}
-	
-	for _, ca := range jobInfo.CAs {
-		addr := common.HexToAddress(ca)
-		addrs = append(addrs, addr)
-	}
-	
-	jobInfo.contractAddresses = addrs
 	
 	handler := manager.handlers[jobInfo.Handler]
 	

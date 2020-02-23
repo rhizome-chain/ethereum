@@ -1,8 +1,9 @@
 package subs
 
 import (
-	"github.com/rhizome-chain/tendermint-daemon/types"
 	"github.com/spf13/cobra"
+	
+	"github.com/rhizome-chain/tendermint-daemon/types"
 )
 
 const (
@@ -14,8 +15,6 @@ type EthConfig struct {
 }
 
 var _ types.ModuleConfig = (*EthConfig)(nil)
-
-
 
 func AddEthFlags(cmd *cobra.Command) {
 	cmd.Flags().String(flagEthUrl, "", "Ethereum network url : wss://mainnet.infura.io/v3/PROJECT-ID")
