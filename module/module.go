@@ -26,6 +26,13 @@ type EthModule struct {
 
 var _ daemon.Module = (*EthModule)(nil)
 
+func (e *EthModule) GetFactory(name string) worker.Factory {
+	if name == subs.FactoryName {
+		return e.manager
+	}
+	return nil
+}
+
 func (e *EthModule) Name() string {
 	return Name
 }

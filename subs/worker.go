@@ -3,6 +3,7 @@ package subs
 import (
 	"context"
 	"fmt"
+	"github.com/rhizome-chain/tendermint-daemon/tm/client"
 	"math/big"
 	
 	"github.com/ethereum/go-ethereum"
@@ -51,19 +52,9 @@ func (subscriber *EthSubscriber) Start() error {
 	checkPoint := &ethtypes.BlockCheckPoint{}
 	subscriber.helper.GetCheckpoint(checkPoint)
 	
-	// go func() {
-	// 	if checkPoint.BlockNumber > 0 {
-	// 		subscriber.collect(checkPoint)
-	// 	}
-	//
-	// 	subscriber.subscribe(checkPoint)
-	// 	subscriber.helper.Info("[WARN] ETH Subs Ends. ", "job_id", subscriber.ID())
-	// }()
-	
 	if subscriber.jobInfo.From > 0 && checkPoint.BlockNumber == 0 {
 		checkPoint.BlockNumber = subscriber.jobInfo.From
 	}
-	
 	
 	if checkPoint.BlockNumber > 0 {
 		subscriber.collect(checkPoint)
@@ -84,7 +75,13 @@ func (subscriber *EthSubscriber) handleLog(elog types.Log, checkPoint *ethtypes.
 	err := subscriber.handler.HandleLog(subscriber.helper, elog)
 	
 	if err != nil {
-		subscriber.helper.Error("[FATAL-ETH-LogHandler] ", "job_id", subscriber.ID(), "err", err)
+		if client.IsErrTxInCache(err) {
+			subscriber.helper.Debug("[ETH-LogHandler] Skip TxInCache",
+				"job_id=", subscriber.ID(), "BlockNumber=", elog.BlockNumber, "Index=", elog.Index)
+		} else {
+			subscriber.helper.Error("[ERROR-ETH-LogHandler] ", "job_id", subscriber.ID(), "err", err)
+		}
+		
 		// panic(fmt.Sprintf("handleLog %s", subscriber.ID()))
 	} else {
 		checkPoint.BlockNumber = elog.BlockNumber
@@ -166,12 +163,20 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *ethtypes.BlockCheckPoin
 	beenHandled := false
 	if len(logs) > 0 {
 		if offset == 0 {
+			skippedBlock := uint64(0)
+			skippedCount := 0
 			for _, vLog := range logs {
 				if vLog.BlockNumber == checkPoint.BlockNumber && vLog.Index <= checkPoint.Index {
-					fmt.Println("------ Skip Log : Block - ", vLog.BlockNumber, ", Index - ", vLog.Index, "<=", checkPoint.Index)
+					//fmt.Println("------ Skip Log : Block - ", vLog.BlockNumber, ", Index - ", vLog.Index, "<=", checkPoint.Index)
+					skippedCount++
+					skippedBlock = checkPoint.BlockNumber
 					continue
 				}
-				
+				subscriber.helper.Info(fmt.Sprintf("Skip %d logs in block %d", skippedCount, skippedBlock))
+				break
+			}
+			
+			for _, vLog := range logs {
 				if !subscriber.handleLog(vLog, checkPoint) {
 					return 0
 				}

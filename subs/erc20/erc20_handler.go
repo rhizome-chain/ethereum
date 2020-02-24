@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"fmt"
+	"errors"
 	"log"
 	"math/big"
 	"strings"
@@ -62,6 +63,12 @@ func (handler *ERC20LogHandler) HandleLog(helper *worker.Helper, elog types.Log)
 	logHash := elog.Topics[0].Hex()
 	
 	address := elog.Address.Hex()
+	if len(elog.Topics) < 3{
+		errStr := fmt.Sprintf("Log topics size is less than 2: %d:%d",elog.BlockNumber,elog.TxIndex)
+		helper.Error(errStr)
+		return errors.New(errStr)
+	}
+	
 	fromAddr := common.HexToAddress(elog.Topics[1].Hex()).Hex()
 	toAddr := common.HexToAddress(elog.Topics[2].Hex()).Hex()
 	

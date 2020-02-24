@@ -9,6 +9,9 @@ import (
 	"github.com/rhizome-chain/tendermint-daemon/daemon/worker"
 )
 
+const (
+	FactoryName = "eth_subs"
+)
 // EthSubsManager implements worker.Factory, name eth_subs
 type EthSubsManager struct {
 	networkURL string
@@ -35,7 +38,7 @@ func (manager *EthSubsManager) Space() string {
 
 // Name implements worker.Factory.Name
 func (manager *EthSubsManager) Name() string {
-	return "eth_subs"
+	return FactoryName
 }
 
 // NewWorker implements worker.Factory.NewWorker

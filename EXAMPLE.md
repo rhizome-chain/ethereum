@@ -9,6 +9,7 @@ TMHOME=chainroot1 go run ./examples/. init --chain-id=daemon-chain --node-name=n
        --mempool.size=300000 \
        --mempool.max_txs_bytes=107374182400 \
        --mempool.max_tx_bytes=104857600 \
+       --consensus.timeout_commit=1s \
        --daemon_api_addr=0.0.0.0:7777 \
        --daemon_alive_threshold=4 \
        --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
