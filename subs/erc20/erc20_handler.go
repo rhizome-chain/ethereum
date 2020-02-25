@@ -23,7 +23,7 @@ type ERC20LogHandler struct {
 	erc20Abi *abi.ABI
 }
 
-type erc20Event struct {
+type Erc20Event struct {
 	Address     string   `json:"addr"`
 	From        string   `json:"from"`
 	To          string   `json:"to"`
@@ -34,7 +34,7 @@ type erc20Event struct {
 }
 
 func init() {
-	tdtypes.BasicCdc.RegisterConcrete(erc20Event{}, "eth/erc20Event", nil)
+	tdtypes.BasicCdc.RegisterConcrete(Erc20Event{}, "eth/Erc20Event", nil)
 }
 
 var _ ethtypes.LogHandler = (*ERC20LogHandler)(nil)
@@ -72,7 +72,7 @@ func (handler *ERC20LogHandler) HandleLog(helper *worker.Helper, elog types.Log)
 	fromAddr := common.HexToAddress(elog.Topics[1].Hex()).Hex()
 	toAddr := common.HexToAddress(elog.Topics[2].Hex()).Hex()
 	
-	event := erc20Event{Address: address, From: fromAddr, To: toAddr,
+	event := Erc20Event{Address: address, From: fromAddr, To: toAddr,
 		BlockNumber: elog.BlockNumber, TxIndex: elog.TxIndex}
 	
 	var err error

@@ -37,7 +37,7 @@ type ERC721LogHandler struct {
 
 var _ ethtypes.LogHandler = (*ERC721LogHandler)(nil)
 
-type erc721Event struct {
+type Erc721Event struct {
 	Address     string   `json:"addr"`
 	From        string   `json:"from"`
 	To          string   `json:"to"`
@@ -48,7 +48,7 @@ type erc721Event struct {
 }
 
 func init() {
-	tdtypes.BasicCdc.RegisterConcrete(erc721Event{}, "erc721Event", nil)
+	tdtypes.BasicCdc.RegisterConcrete(Erc721Event{}, "Erc721Event", nil)
 }
 
 // Name : erc20
@@ -66,7 +66,7 @@ func (handler *ERC721LogHandler) HandleLog(helper *worker.Helper, elog types.Log
 	logHash := elog.Topics[0].Hex()
 	
 	address := elog.Address.Hex()
-	event := erc721Event{Address: address,
+	event := Erc721Event{Address: address,
 		BlockNumber: elog.BlockNumber, TxIndex: elog.TxIndex}
 	
 	if len(elog.Topics) > 2 {

@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+	common2 "github.com/rhizome-chain/ethereum/common"
 	"path/filepath"
 	
 	"github.com/spf13/cobra"
@@ -9,7 +10,6 @@ import (
 	
 	cfg "github.com/tendermint/tendermint/config"
 	
-	"github.com/rhizome-chain/ethereum/subs"
 	"github.com/rhizome-chain/tendermint-daemon/daemon"
 	"github.com/rhizome-chain/tendermint-daemon/daemon/common"
 	"github.com/rhizome-chain/tendermint-daemon/types"
@@ -23,17 +23,17 @@ func (e EthModuleProvider) NewModule(tmCfg *cfg.Config, config common.DaemonConf
 }
 
 func (e *EthModuleProvider) GetDefaultConfig() types.ModuleConfig {
-	config := &subs.EthConfig{}
+	config := &common2.EthConfig{}
 	return config
 }
 
 func (e *EthModuleProvider) AddFlags(cmd *cobra.Command) {
-	subs.AddEthFlags(cmd)
+	common2.AddEthFlags(cmd)
 }
 
 func (e *EthModuleProvider) InitFile(config *cfg.Config) {
 	confFilePath := filepath.Join(config.RootDir, "config", "ethereum.toml")
-	ethConfig := &subs.EthConfig{}
+	ethConfig := &common2.EthConfig{}
 	err := viper.Unmarshal(ethConfig)
 	if err != nil {
 		panic("Unmarshal EthConfig" + err.Error())

@@ -2,6 +2,8 @@ package module
 
 import (
 	"fmt"
+	"github.com/rhizome-chain/ethereum/common"
+	"github.com/rhizome-chain/ethereum/log"
 	"path/filepath"
 	
 	erc20 "github.com/rhizome-chain/ethereum/subs/erc20"
@@ -20,15 +22,16 @@ import (
 const Name = "eth"
 
 type EthModule struct {
-	modcfg  *subs.EthConfig
-	manager *subs.EthSubsManager
+	modcfg      *common.EthConfig
+	subsManager *subs.EthSubsManager
+	logFactory  *log.EthLogFactory
 }
 
 var _ daemon.Module = (*EthModule)(nil)
 
 func (e *EthModule) GetFactory(name string) worker.Factory {
 	if name == subs.FactoryName {
-		return e.manager
+		return e.subsManager
 	}
 	return nil
 }
@@ -42,7 +45,7 @@ func (e *EthModule) GetConfig() types.ModuleConfig {
 }
 
 func (e *EthModule) Factories() (facs []worker.Factory) {
-	return []worker.Factory{e.manager}
+	return []worker.Factory{e.subsManager, e.logFactory}
 }
 
 func (e *EthModule) Init(config *config.Config) {
@@ -59,17 +62,21 @@ func (e *EthModule) Init(config *config.Config) {
 		panic("Ethereum network url is not set.")
 	}
 	
-	manager := subs.NewEthSubsManager(ethUrl)
+	subsManager := subs.NewEthSubsManager(ethUrl)
 	
-	manager.RegisterLogHandler(erc20.NewERC20LogHandler())
-	manager.RegisterLogHandler(erc721.NewERC721LogHandler())
+	subsManager.RegisterLogHandler(erc20.NewERC20LogHandler())
+	subsManager.RegisterLogHandler(erc721.NewERC721LogHandler())
 	
-	e.manager = manager
+	e.subsManager = subsManager
+	
+	logFactory := log.NewEthLogFactory(*e.modcfg)
+	
+	e.logFactory = logFactory
 }
 
-func loadFile(config *config.Config) *subs.EthConfig {
+func loadFile(config *config.Config) *common.EthConfig {
 	confFilePath := filepath.Join(config.RootDir, "config", "ethereum.toml")
-	ethConfig := &subs.EthConfig{}
+	ethConfig := &common.EthConfig{}
 	types.LoadModuleConfigFile(confFilePath, ethConfig)
 	fmt.Println("[EthModule] Load EthConfig file:", confFilePath, ethConfig)
 	return ethConfig

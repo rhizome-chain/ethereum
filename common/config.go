@@ -1,4 +1,4 @@
-package subs
+package common
 
 import (
 	"github.com/spf13/cobra"
