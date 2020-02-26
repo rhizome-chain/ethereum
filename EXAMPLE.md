@@ -12,7 +12,7 @@ TMHOME=chainroot1 go run ./examples/. init --chain-id=daemon-chain --node-name=n
        --consensus.timeout_commit=1s \
        --daemon_api_addr=0.0.0.0:7777 \
        --daemon_alive_threshold=4 \
-       --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
+       --eth_network_url=wss://mainnet.infura.io/ws/v3/21f6dd123d1845b489095a9afa39a81d
 
 export MASTER_ID=$(TMHOME=chainroot1 go run ./examples/. show_node_id)
 TMHOME=chainroot2 go run ./examples/. init --chain-id=daemon-chain --node-name=node2 \
@@ -27,7 +27,7 @@ TMHOME=chainroot2 go run ./examples/. init --chain-id=daemon-chain --node-name=n
        --instrumentation.prometheus_listen_addr=:16660 \
        --daemon_api_addr=0.0.0.0:7778 \
        --daemon_alive_threshold=4 \
-       --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
+       --eth_network_url=wss://mainnet.infura.io/ws/v3/21f6dd123d1845b489095a9afa39a81d
 
 export MASTER_ID=$(TMHOME=chainroot1 go run ./examples/. show_node_id)
 TMHOME=chainroot3 go run ./examples/. init --chain-id=daemon-chain --node-name=node3 \
@@ -42,7 +42,7 @@ TMHOME=chainroot3 go run ./examples/. init --chain-id=daemon-chain --node-name=n
        --instrumentation.prometheus_listen_addr=:17760 \
        --daemon_api_addr=0.0.0.0:7779 \
        --daemon_alive_threshold=4 \
-       --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
+       --eth_network_url=wss://mainnet.infura.io/ws/v3/21f6dd123d1845b489095a9afa39a81d
 
 export MASTER_ID=$(TMHOME=chainroot1 go run ./examples/. show_node_id)
 TMHOME=chainroot4 go run ./examples/. init --chain-id=daemon-chain --node-name=node4 \
@@ -57,7 +57,7 @@ TMHOME=chainroot4 go run ./examples/. init --chain-id=daemon-chain --node-name=n
        --instrumentation.prometheus_listen_addr=:18860 \
        --daemon_api_addr=0.0.0.0:7780 \
        --daemon_alive_threshold=4 \
-       --eth_network_url=wss://mainnet.infura.io/ws/v3/a7f6d7ea8be04689a9b0394b7378451b
+       --eth_network_url=wss://mainnet.infura.io/ws/v3/21f6dd123d1845b489095a9afa39a81d
 
 ```
 * Copy genesis.json and paste to chainroot2/config, chainroot3/config

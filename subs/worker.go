@@ -201,7 +201,7 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *ethtypes.BlockCheckPoin
 		checkPoint.BlockNumber = checkPoint.BlockNumber + step
 		checkPoint.Index = 0
 	}
-	subscriber.client.Close()
+	
 	header, err := subscriber.client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		// if  err != rpc.ErrClientQuit {
