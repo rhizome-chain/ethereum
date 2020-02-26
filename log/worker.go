@@ -28,36 +28,56 @@ func (worker *EthLogWorker) ID() string {
 	return worker.id
 }
 
-func GetParser(dataType string) (parser func(value []byte) string, err error) {
+func GetUnmarshal(dataType string) (unmarshal func(value []byte) interface{}, err error) {
 	if dataType == "erc20" {
-		parser = func(value []byte) string {
+		unmarshal = func(value []byte) interface{} {
 			var event erc20.Erc20Event
 			types.BasicCdc.UnmarshalBinaryBare(value, &event)
-			var log string
-			btz, err := json.Marshal(event)
-			if err != nil {
-				log = err.Error()
-			} else {
-				log = string(btz)
-			}
-			return log
+			return event
 		}
-	} else if dataType == "721" {
-		parser = func(value []byte) string {
+	} else if dataType == "erc721" {
+		unmarshal = func(value []byte) interface{} {
 			var event erc721.Erc721Event
 			types.BasicCdc.UnmarshalBinaryBare(value, &event)
+			return event
+		}
+	} else {
+		err = errors.New("unknown Data Type for unmarshal" + dataType)
+		return nil, err
+	}
+	
+	return unmarshal, err
+}
+
+
+func GetJsonStringer(dataType string) (parser func(value []byte) string, err error) {
+	unmarshal, err := GetUnmarshal(dataType)
+	
+	if err == nil {
+		parser = func(value []byte) string {
+			var event = unmarshal(value)
 			var log string
 			btz, err := json.Marshal(event)
 			if err != nil {
-				log = err.Error()
+				log = fmt.Sprintf("{\"err\"=\"%s\"}", err.Error())
 			} else {
 				log = string(btz)
 			}
 			return log
 		}
-	} else {
-		err = errors.New("unknown Data Type " + dataType)
-		return nil, err
+	}
+	
+	return parser, err
+}
+
+func GetSimpleStringer(dataType string) (parser func(value []byte) string, err error) {
+	unmarshal, err := GetUnmarshal(dataType)
+	
+	if err == nil {
+		parser = func(value []byte) string {
+			var event = unmarshal(value)
+			return fmt.Sprintf("%v",event)
+		}
 	}
 	
 	return parser, err
@@ -66,10 +86,17 @@ func GetParser(dataType string) (parser func(value []byte) string, err error) {
 // Start ..
 func (worker *EthLogWorker) Start() (err error) {
 	worker.wait = make(chan bool)
-	parser, err := GetParser(worker.jobInfo.DataType)
+	
+	var stringer  func(value []byte) string
+	
+	if worker.jobInfo.LogType == "json"{
+		stringer, err = GetJsonStringer(worker.jobInfo.DataType)
+	} else {
+		stringer, err = GetSimpleStringer(worker.jobInfo.DataType)
+	}
 	
 	if err != nil {
-		worker.helper.Error("[EthLog] get parser ", err)
+		worker.helper.Error("[EthLog] get stringer ", err)
 		return err
 	}
 	
@@ -81,7 +108,7 @@ func (worker *EthLogWorker) Start() (err error) {
 	worker.helper.GetCheckpoint(&lastRow)
 	
 	cancel, err := worker.sourceProxy.CollectAndSubscribe("in", lastRow, func(jobID string, topic string, rowID string, value []byte) bool {
-		fmt.Println("[EthLog]", jobID, rowID, parser(value))
+		fmt.Println("[EthLog]", jobID, rowID, stringer(value))
 		worker.helper.PutCheckpoint(rowID)
 		worker.started = false
 		return true

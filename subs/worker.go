@@ -3,8 +3,10 @@ package subs
 import (
 	"context"
 	"fmt"
-	"github.com/rhizome-chain/tendermint-daemon/tm/client"
+	
 	"math/big"
+	
+	"github.com/rhizome-chain/tendermint-daemon/tm/client"
 	
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -105,6 +107,9 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *ethtypes.BlockCheckPoint)
 	logs := make(chan types.Log)
 	sub, err := subscriber.client.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
+		// if  err != rpc.ErrClientQuit {
+		// 	subscriber.helper.Error("[ERROR] SubscribeFilterLogs ", "job_id", subscriber.ID(), "err", err)
+		// }
 		subscriber.helper.Error("[ERROR] SubscribeFilterLogs ", "job_id", subscriber.ID(), "err", err)
 		return
 	}
@@ -196,10 +201,12 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *ethtypes.BlockCheckPoin
 		checkPoint.BlockNumber = checkPoint.BlockNumber + step
 		checkPoint.Index = 0
 	}
-	
+	subscriber.client.Close()
 	header, err := subscriber.client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
-		// panic("Cannot get Eth HeaderByNumber:" + err.Error())
+		// if  err != rpc.ErrClientQuit {
+		// 	subscriber.helper.Error(fmt.Sprintf("Job[%s] cannot get Eth HeaderByNumber", subscriber.helper.ID()), err)
+		// }
 		subscriber.helper.Error(fmt.Sprintf("Job[%s] cannot get Eth HeaderByNumber", subscriber.helper.ID()), err)
 		return 0
 	}
