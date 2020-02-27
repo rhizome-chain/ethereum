@@ -90,6 +90,24 @@ curl -i \
   -X POST --data '{"handler":"erc20","cas":["0xdac17f958d2ee523a2206206994597c13d831ec7"], "from":9124875 }' \
   http://localhost:7777/v1/daemon/job/add/factory/eth_subs/jobid/erc20_tether15
 
+curl -i \
+  -H "Accept: application/json" \
+  -H "Content-Type:application/json" \
+  -X POST --data '{"handler":"erc20","cas":["0xdac17f958d2ee523a2206206994597c13d831ec7"], "from":9124875 }' \
+  http://localhost:7777/v1/daemon/job/add/factory/eth_subs/jobid/erc20_tether16
+
+curl -i \
+  -H "Accept: application/json" \
+  -H "Content-Type:application/json" \
+  -X POST --data '{"handler":"erc20","cas":["0xdac17f958d2ee523a2206206994597c13d831ec7"], "from":9124875 }' \
+  http://localhost:7777/v1/daemon/job/add/factory/eth_subs/jobid/erc20_tether17
+
+curl -i \
+  -H "Accept: application/json" \
+  -H "Content-Type:application/json" \
+  -X POST --data '{"handler":"erc20","cas":["0xdac17f958d2ee523a2206206994597c13d831ec7"], "from":9124875 }' \
+  http://localhost:7777/v1/daemon/job/add/factory/eth_subs/jobid/erc20_tether18
+
 #curl -i \
 #-H "Accept: application/json" \
 #-H "Content-Type:application/json" \
