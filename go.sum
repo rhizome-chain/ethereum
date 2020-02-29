@@ -272,6 +272,7 @@ github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40T
 github.com/rakyll/statik v0.1.6/go.mod h1:OEi9wJV/fMUAGx1eNjq75DKDsJVuEv1U0oYdX6GX8Zs=
 github.com/rcrowley/go-metrics v0.0.0-20180503174638-e2704e165165 h1:nkcn14uNmFEuGCb2mBZbBb24RdNRL08b/wb+xBOYpuk=
 github.com/rcrowley/go-metrics v0.0.0-20180503174638-e2704e165165/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
+github.com/rhizomata-io/dist-daemon-tendermint v0.0.1/go.mod h1:eKa8Iu6srjIajZ6wdvQ05HLYSRtp4VI+UwkGmsIOfMM=
 github.com/rhizome-chain/tendermint-daemon v0.0.1 h1:gNtshZJ0AtMZ3/CUFgIS1oDHs04ACgtKAQm35DvaWfw=
 github.com/rhizome-chain/tendermint-daemon v0.0.1/go.mod h1:PKXRvZfNJxWNFmTdq+OeIeGDCRJ7Wod1HJSr7HkKLdI=
 github.com/rjeczalik/notify v0.9.1/go.mod h1:rKwnCoCGeuQnwBtTSPL9Dad03Vh2n40ePRrjvIXnJho=

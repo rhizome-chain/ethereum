@@ -49,7 +49,6 @@ func GetUnmarshal(dataType string) (unmarshal func(value []byte) interface{}, er
 	return unmarshal, err
 }
 
-
 func GetJsonStringer(dataType string) (parser func(value []byte) string, err error) {
 	unmarshal, err := GetUnmarshal(dataType)
 	
@@ -76,23 +75,31 @@ func GetSimpleStringer(dataType string) (parser func(value []byte) string, err e
 	if err == nil {
 		parser = func(value []byte) string {
 			var event = unmarshal(value)
-			return fmt.Sprintf("%v",event)
+			return fmt.Sprintf("%v", event)
 		}
 	}
 	
 	return parser, err
 }
 
+func GetNoneStringer(dataType string) (parser func(value []byte) string, err error) {
+	return func(value []byte) string {
+		return ""
+	}, err
+}
+
 // Start ..
 func (worker *EthLogWorker) Start() (err error) {
 	worker.wait = make(chan bool)
 	
-	var stringer  func(value []byte) string
+	var stringer func(value []byte) string
 	
-	if worker.jobInfo.LogType == "json"{
+	if worker.jobInfo.LogType == "json" {
 		stringer, err = GetJsonStringer(worker.jobInfo.DataType)
-	} else {
+	} else if worker.jobInfo.LogType == "simple" {
 		stringer, err = GetSimpleStringer(worker.jobInfo.DataType)
+	} else {
+		stringer, err = GetNoneStringer(worker.jobInfo.DataType)
 	}
 	
 	if err != nil {
@@ -109,6 +116,7 @@ func (worker *EthLogWorker) Start() (err error) {
 	
 	cancel, err := worker.sourceProxy.CollectAndSubscribe("in", lastRow, func(jobID string, topic string, rowID string, value []byte) bool {
 		fmt.Println("[EthLog]", jobID, rowID, stringer(value))
+		
 		worker.helper.PutCheckpoint(rowID)
 		worker.started = false
 		return true

@@ -2,6 +2,7 @@ package subs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	
 	"math/big"
@@ -105,12 +106,9 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *ethtypes.BlockCheckPoint)
 	}
 	
 	logs := make(chan types.Log)
-	sub, err := subscriber.client.SubscribeFilterLogs(context.Background(), query, logs)
-	if err != nil {
-		// if  err != rpc.ErrClientQuit {
-		// 	subscriber.helper.Error("[ERROR] SubscribeFilterLogs ", "job_id", subscriber.ID(), "err", err)
-		// }
-		subscriber.helper.Error("[ERROR] SubscribeFilterLogs ", "job_id", subscriber.ID(), "err", err)
+	
+	sub, err := subscriber.subscribeFilterLogs(query, logs)
+	if err != nil || sub == nil{
 		return
 	}
 	
@@ -135,6 +133,23 @@ func (subscriber *EthSubscriber) subscribe(checkPoint *ethtypes.BlockCheckPoint)
 			}
 		}
 	}
+}
+
+func (subscriber *EthSubscriber) subscribeFilterLogs(query ethereum.FilterQuery, logs chan types.Log) (ethereum.Subscription, error) {
+	var err error
+	defer func(){
+		v := recover()
+		err = errors.New(fmt.Sprintf("ethereum SubscribeFilterLogs %v", v))
+		subscriber.helper.Error("[FATAL] subscribeFilterLogs ", err)
+	}()
+	
+	sub, err := subscriber.client.SubscribeFilterLogs(context.Background(), query, logs)
+	if err != nil {
+		subscriber.helper.Error("[ERROR] SubscribeFilterLogs ", "job_id", subscriber.ID(), "err", err)
+		return nil, err
+	}
+	
+	return sub, err
 }
 
 func (subscriber *EthSubscriber) collect(checkPoint *ethtypes.BlockCheckPoint) {
@@ -208,6 +223,7 @@ func (subscriber *EthSubscriber) collectStep(checkPoint *ethtypes.BlockCheckPoin
 		// 	subscriber.helper.Error(fmt.Sprintf("Job[%s] cannot get Eth HeaderByNumber", subscriber.helper.ID()), err)
 		// }
 		subscriber.helper.Error(fmt.Sprintf("Job[%s] cannot get Eth HeaderByNumber", subscriber.helper.ID()), err)
+		
 		return 0
 	}
 	
@@ -227,8 +243,8 @@ func (subscriber *EthSubscriber) Stop() error {
 	if subscriber.client != nil {
 		subscriber.client.Close()
 	}
-	subscriber.client = nil
 	subscriber.started = false
+	subscriber.client = nil
 	return nil
 }
 

@@ -78,35 +78,27 @@ curl -i \
   -X POST --data '{"handler":"erc20","cas":["0xdac17f958d2ee523a2206206994597c13d831ec7"], "from":9124875 }' \
   http://localhost:7777/v1/daemon/job/add/factory/eth_subs/jobid/erc20_tether13
 
+
+curl -i \
+  -H "Accept: application/json" \
+  -H "Content-Type:application/json" \
+  -X POST --data '{"source":"erc20_tether13", "dataType":"erc20", "logType":"none" }' \
+  http://localhost:7777/v1/daemon/job/add/factory/eth_log/jobid/log_tether13
+
+
 curl -i \
   -H "Accept: application/json" \
   -H "Content-Type:application/json" \
   -X POST --data '{"handler":"erc20","cas":["0xdac17f958d2ee523a2206206994597c13d831ec7"], "from":9124875 }' \
   http://localhost:7777/v1/daemon/job/add/factory/eth_subs/jobid/erc20_tether14
 
-curl -i \
-  -H "Accept: application/json" \
-  -H "Content-Type:application/json" \
-  -X POST --data '{"handler":"erc20","cas":["0xdac17f958d2ee523a2206206994597c13d831ec7"], "from":9124875 }' \
-  http://localhost:7777/v1/daemon/job/add/factory/eth_subs/jobid/erc20_tether15
 
 curl -i \
   -H "Accept: application/json" \
   -H "Content-Type:application/json" \
-  -X POST --data '{"handler":"erc20","cas":["0xdac17f958d2ee523a2206206994597c13d831ec7"], "from":9124875 }' \
-  http://localhost:7777/v1/daemon/job/add/factory/eth_subs/jobid/erc20_tether16
+  -X POST --data '{"source":"erc20_tether14", "dataType":"erc20", "logType":"none" }' \
+  http://localhost:7777/v1/daemon/job/add/factory/eth_log/jobid/log_tether14
 
-curl -i \
-  -H "Accept: application/json" \
-  -H "Content-Type:application/json" \
-  -X POST --data '{"handler":"erc20","cas":["0xdac17f958d2ee523a2206206994597c13d831ec7"], "from":9124875 }' \
-  http://localhost:7777/v1/daemon/job/add/factory/eth_subs/jobid/erc20_tether17
-
-curl -i \
-  -H "Accept: application/json" \
-  -H "Content-Type:application/json" \
-  -X POST --data '{"handler":"erc20","cas":["0xdac17f958d2ee523a2206206994597c13d831ec7"], "from":9124875 }' \
-  http://localhost:7777/v1/daemon/job/add/factory/eth_subs/jobid/erc20_tether18
 
 #curl -i \
 #-H "Accept: application/json" \

@@ -28,15 +28,11 @@ curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
 curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
   -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether13
 curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
+  -X DELETE http://localhost:7777/v1/daemon/job/log_tether13
+curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
   -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether14
 curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
-  -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether15
-curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
-  -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether16
-curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
-  -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether17
-curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
-  -X DELETE http://localhost:7777/v1/daemon/job/erc20_tether18
+  -X DELETE http://localhost:7777/v1/daemon/job/log_tether14
 #curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
 #     -X DELETE http://localhost:7777/v1/daemon/job/erc20_others
 #curl -i -H "Accept: application/json" -H "Content-Type:application/json" \
