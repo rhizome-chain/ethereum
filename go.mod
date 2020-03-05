@@ -3,7 +3,6 @@ module github.com/rhizome-chain/ethereum
 go 1.13
 
 require (
-	github.com/cosmos/cosmos-sdk v0.38.1 // indirect
 	github.com/ethereum/go-ethereum v1.9.9
 	github.com/rhizome-chain/tendermint-daemon v0.0.2
 	github.com/spf13/cobra v0.0.5
